@@ -19,6 +19,7 @@ public class HeroKnight : MonoBehaviour {
     private bool                m_isWallSliding = false;
     private bool                m_grounded = false;
     private bool                m_rolling = false;
+    private bool                m_has_double_jumped = false;
     private int                 m_facingDirection = 1;
     private int                 m_currentAttack = 0;
     private float               m_timeSinceAttack = 0.0f;
@@ -58,6 +59,8 @@ public class HeroKnight : MonoBehaviour {
         {
             m_grounded = true;
             m_animator.SetBool("Grounded", m_grounded);
+            m_has_double_jumped = false;
+            m_animator.SetBool("Has_Double_Jumped", m_has_double_jumped);
         }
 
         //Check if character just started falling
@@ -146,13 +149,25 @@ public class HeroKnight : MonoBehaviour {
             
 
         //Jump
-        else if (Input.GetKeyDown("space") && m_grounded && !m_rolling)
+        else if ((Input.GetKeyDown("w") || Input.GetKeyDown("space")) && m_grounded && !m_rolling)
         {
             m_animator.SetTrigger("Jump");
             m_grounded = false;
             m_animator.SetBool("Grounded", m_grounded);
             m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
             m_groundSensor.Disable(0.2f);
+        }
+
+        //Double Jump Test
+        else if ((Input.GetKeyDown("w") || Input.GetKeyDown("space")) && !m_grounded && !m_rolling && !m_has_double_jumped) {
+            m_rolling = true;
+            m_animator.SetTrigger("Roll");
+            m_body2d.velocity = new Vector2(m_facingDirection * m_rollForce, m_jumpForce);
+            m_grounded = true;
+            m_animator.SetBool("Grounded", m_grounded);
+            m_has_double_jumped = true;
+            m_animator.SetBool("Has_Double_Jumped", m_has_double_jumped);
+            m_groundSensor.Disable(0f);
         }
 
         //Run
