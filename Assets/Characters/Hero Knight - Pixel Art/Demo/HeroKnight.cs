@@ -27,6 +27,20 @@ public class HeroKnight : MonoBehaviour {
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
 
+    private const string ENV_GROUND = "Grounded";
+    private const string ACT_DOUBLE_JUMP = "Has_Double_Jumped";
+    private const string ACT_WALL_SLIDE = "WallSlide";
+    private const string ACT_JUMP = "Jump";
+    private const string ACT_ROLL = "Roll";
+    private const string ACT_BLOCK = "Block";
+    private const string ACT_IDLE_BLOCK = "IdleBlock";
+    private const string ACT_ATTACK = "Attack";
+    private const string ACT_HURT = "Hurt";
+    private const string ACT_DEATH = "Death";
+    private const string PROP_BLOOD = "noBlood";
+    private const string ANIM_STATE = "AnimState";
+    private const string ANIM_AIR_SPEED_Y = "AirSpeedY";
+
 
     // Use this for initialization
     void Start ()
@@ -58,16 +72,16 @@ public class HeroKnight : MonoBehaviour {
         if (!m_grounded && m_groundSensor.State())
         {
             m_grounded = true;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool(ENV_GROUND, m_grounded);
             m_has_double_jumped = false;
-            m_animator.SetBool("Has_Double_Jumped", m_has_double_jumped);
+            m_animator.SetBool(ACT_DOUBLE_JUMP, m_has_double_jumped);
         }
 
         //Check if character just started falling
         if (m_grounded && !m_groundSensor.State())
         {
             m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool(ENV_GROUND, m_grounded);
         }
 
         // -- Handle input and movement --
@@ -91,23 +105,23 @@ public class HeroKnight : MonoBehaviour {
             m_body2d.velocity = new Vector2(inputX * m_speed, m_body2d.velocity.y);
 
         //Set AirSpeed in animator
-        m_animator.SetFloat("AirSpeedY", m_body2d.velocity.y);
+        m_animator.SetFloat(ANIM_AIR_SPEED_Y, m_body2d.velocity.y);
 
         // -- Handle Animations --
         //Wall Slide
         m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
-        m_animator.SetBool("WallSlide", m_isWallSliding);
+        m_animator.SetBool(ACT_WALL_SLIDE, m_isWallSliding);
 
         //Death
         if (Input.GetKeyDown("e") && !m_rolling)
         {
-            m_animator.SetBool("noBlood", m_noBlood);
-            m_animator.SetTrigger("Death");
+            m_animator.SetBool(PROP_BLOOD, m_noBlood);
+            m_animator.SetTrigger(ACT_DEATH);
         }
             
         //Hurt
         else if (Input.GetKeyDown("q") && !m_rolling)
-            m_animator.SetTrigger("Hurt");
+            m_animator.SetTrigger(ACT_HURT);
 
         //Attack
         else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && !m_rolling)
@@ -123,7 +137,7 @@ public class HeroKnight : MonoBehaviour {
                 m_currentAttack = 1;
 
             // Call one of three attack animations "Attack1", "Attack2", "Attack3"
-            m_animator.SetTrigger("Attack" + m_currentAttack);
+            m_animator.SetTrigger(ACT_ATTACK + m_currentAttack);
 
             // Reset timer
             m_timeSinceAttack = 0.0f;
@@ -132,18 +146,18 @@ public class HeroKnight : MonoBehaviour {
         // Block
         else if (Input.GetMouseButtonDown(1) && !m_rolling)
         {
-            m_animator.SetTrigger("Block");
-            m_animator.SetBool("IdleBlock", true);
+            m_animator.SetTrigger(ACT_BLOCK);
+            m_animator.SetBool(ACT_IDLE_BLOCK, true);
         }
 
         else if (Input.GetMouseButtonUp(1))
-            m_animator.SetBool("IdleBlock", false);
+            m_animator.SetBool(ACT_IDLE_BLOCK, false);
 
         // Roll
         else if (Input.GetKeyDown("left shift") && !m_rolling && !m_isWallSliding)
         {
             m_rolling = true;
-            m_animator.SetTrigger("Roll");
+            m_animator.SetTrigger(ACT_ROLL);
             m_body2d.velocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.velocity.y);
         }
             
@@ -151,9 +165,9 @@ public class HeroKnight : MonoBehaviour {
         //Jump
         else if ((Input.GetKeyDown("w") || Input.GetKeyDown("space")) && m_grounded && !m_rolling)
         {
-            m_animator.SetTrigger("Jump");
+            m_animator.SetTrigger(ACT_JUMP);
             m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool(ENV_GROUND, m_grounded);
             m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
             m_groundSensor.Disable(0.2f);
         }
@@ -161,12 +175,12 @@ public class HeroKnight : MonoBehaviour {
         //Double Jump Test
         else if ((Input.GetKeyDown("w") || Input.GetKeyDown("space")) && !m_grounded && !m_rolling && !m_has_double_jumped) {
             m_rolling = true;
-            m_animator.SetTrigger("Roll");
+            m_animator.SetTrigger(ACT_ROLL);
             m_body2d.velocity = new Vector2(m_facingDirection * m_rollForce, m_jumpForce);
             m_grounded = true;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool(ENV_GROUND, m_grounded);
             m_has_double_jumped = true;
-            m_animator.SetBool("Has_Double_Jumped", m_has_double_jumped);
+            m_animator.SetBool(ACT_DOUBLE_JUMP, m_has_double_jumped);
             m_groundSensor.Disable(0f);
         }
 
@@ -175,7 +189,7 @@ public class HeroKnight : MonoBehaviour {
         {
             // Reset timer
             m_delayToIdle = 0.05f;
-            m_animator.SetInteger("AnimState", 1);
+            m_animator.SetInteger(ANIM_STATE, 1);
         }
 
         //Idle
@@ -184,7 +198,7 @@ public class HeroKnight : MonoBehaviour {
             // Prevents flickering transitions to idle
             m_delayToIdle -= Time.deltaTime;
                 if(m_delayToIdle < 0)
-                    m_animator.SetInteger("AnimState", 0);
+                    m_animator.SetInteger(ANIM_STATE, 0);
         }
     }
 
