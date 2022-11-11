@@ -15,7 +15,6 @@ public class Bandit : MonoBehaviour {
     private int m_health = 100;
     private float m_move_direction = 0;
 
-    // Use this for initialization
     void Start () {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
@@ -33,7 +32,9 @@ public class Bandit : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        //Check if character just landed on the ground
+
+        bool isHeroNear = Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f;
+       
         //if (!m_grounded && m_groundSensor.State()) {
         //  m_grounded = true;
         //  m_animator.SetBool("Grounded", m_grounded);
@@ -61,12 +62,14 @@ public class Bandit : MonoBehaviour {
         // m_animator.SetFloat("AirSpeed", m_body2d.velocity.y);
 
 
-        //Hurt
-        if (Input.GetMouseButtonDown(0))
+        // Get Hurt when player attacks while near
+        if (Input.GetMouseButtonDown(0) && isHeroNear)
         {
             m_animator.SetTrigger("Hurt");
             m_health -= 10;
         }
+
+        // On "F" key pressed revive bandit
         if (Input.GetKeyDown("f"))
         {
             m_combatIdle = !m_combatIdle;
@@ -74,7 +77,8 @@ public class Bandit : MonoBehaviour {
             m_animator.SetTrigger("Recover");
         }
         
-        if(Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f)
+        // Check for hero and change the combat idle animation state
+        if(isHeroNear)
         {
             m_animator.SetInteger("AnimState", 1);
         }
