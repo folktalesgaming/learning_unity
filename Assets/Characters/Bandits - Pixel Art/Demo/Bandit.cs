@@ -13,20 +13,30 @@ public class Bandit : MonoBehaviour {
     private bool                m_combatIdle = false;
     private bool                m_isDead = false;
     private int m_health = 100;
+    private float m_move_direction = 0;
 
     // Use this for initialization
     void Start () {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_Bandit>();
+
+        // if(m_health > 0)
+        // {
+        //     StartCoroutine("MoveCharacterAuto");
+        // }
+        // else
+        // {
+        //     StopCoroutine("MoveCharacterAuto");
+        // }
     }
 	
 	// Update is called once per frame
 	void Update () {
         //Check if character just landed on the ground
         //if (!m_grounded && m_groundSensor.State()) {
-          //  m_grounded = true;
-          //  m_animator.SetBool("Grounded", m_grounded);
+        //  m_grounded = true;
+        //  m_animator.SetBool("Grounded", m_grounded);
         // }
 
         //Check if character just started falling
@@ -40,7 +50,7 @@ public class Bandit : MonoBehaviour {
 
         // Swap direction of sprite depending on walk direction
         //if (inputX > 0)
-         //   transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
+        //   transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
         //else if (inputX < 0)
         //    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
@@ -48,33 +58,38 @@ public class Bandit : MonoBehaviour {
         //m_body2d.velocity = new Vector2(inputX * m_speed, m_body2d.velocity.y);
 
         //Set AirSpeed in animator
-       // m_animator.SetFloat("AirSpeed", m_body2d.velocity.y);
+        // m_animator.SetFloat("AirSpeed", m_body2d.velocity.y);
 
-        // -- Handle Animations --
-         
+
         //Hurt
         if (Input.GetMouseButtonDown(0))
         {
             m_animator.SetTrigger("Hurt");
             m_health -= 10;
         }
-        //Change between idle and combat idle
-        else if (Input.GetKeyDown("f"))
+        if (Input.GetKeyDown("f"))
+        {
             m_combatIdle = !m_combatIdle;
-        else if (m_combatIdle)
+            m_health = 100;
+            m_animator.SetTrigger("Recover");
+        }
+        
+        if(Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f)
+        {
             m_animator.SetInteger("AnimState", 1);
+        }
+        else
+        {
+            m_animator.SetInteger("AnimState", 0);
+        }
 
         // Death animation on health 0
-        if (m_health == 0)
+        if (m_health <= 0)
         {
-            if (!m_isDead)
-                m_animator.SetTrigger("Death");
-            else
-                m_animator.SetTrigger("Recover");
-
-            m_health = 100;
+            m_animator.SetTrigger("Death");
             m_isDead = !m_isDead;
         }
+
 
         //Attack
         //else if(Input.GetMouseButtonDown(0)) {
@@ -89,16 +104,26 @@ public class Bandit : MonoBehaviour {
         //   m_body2d.velocity = new Vector2(m_body2d.velocity.x, m_jumpForce);
         //   m_groundSensor.Disable(0.2f);
         // }
+    }
 
-        //Run
-        // else if (Mathf.Abs(inputX) > Mathf.Epsilon)
-        //    m_animator.SetInteger("AnimState", 2);
+    IEnumerator MoveCharacterAuto ()
+    {
+        yield return new WaitForSeconds(2f);
 
-        //Combat Idle
-        
+        m_move_direction = Random.Range(-1f, 1f);
 
-        //Idle
-        //  else
-        //    m_animator.SetInteger("AnimState", 0);
+        if (Mathf.Abs(m_move_direction) > Mathf.Epsilon)
+            m_animator.SetInteger("AnimState", 2);
+        else
+            m_animator.SetInteger("AnimState", 0);
+
+        // Swap direction of sprite depending on walk direction
+        if (m_move_direction > 0)
+            transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
+        else if (m_move_direction < 0)
+            transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+        // Move
+        m_body2d.velocity = new Vector2(m_move_direction * m_speed, m_body2d.velocity.y);
     }
 }
