@@ -3,8 +3,8 @@ using System.Collections;
 
 public class Bandit : MonoBehaviour {
 
-    [SerializeField] float      m_speed = 4.0f;
-    [SerializeField] float      m_jumpForce = 7.5f;
+    [SerializeField] float      m_speed = 1.0f;
+    // [SerializeField] float      m_jumpForce = 7.5f;
 
     private Animator            m_animator;    
     private Rigidbody2D         m_body2d;
@@ -13,14 +13,14 @@ public class Bandit : MonoBehaviour {
     private bool                m_combatIdle = false;
     private bool                m_isDead = false;
     private int m_health = 100;
-    private float m_move_direction = 0;
+    private float m_move_direction = 1f;
+    private bool m_is_cRoutine_running;
 
     void Start () {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_Bandit>();
-
-        // StartCoroutine("MoveCharacterAuto");
+        m_is_cRoutine_running = false;
     }
 	
 	void Update () {
@@ -38,17 +38,8 @@ public class Bandit : MonoBehaviour {
         //    m_animator.SetBool("Grounded", m_grounded);
         //}
 
-        // -- Handle input and movement --
-        //float inputX = Input.GetAxis("Horizontal");
-
-        // Swap direction of sprite depending on walk direction
-        //if (inputX > 0)
-        //   transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
-        //else if (inputX < 0)
-        //    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-
         // Move
-        //m_body2d.velocity = new Vector2(inputX * m_speed, m_body2d.velocity.y);
+        // m_body2d.velocity = new Vector2(inputX * m_speed, m_body2d.velocity.y);
 
         //Set AirSpeed in animator
         // m_animator.SetFloat("AirSpeed", m_body2d.velocity.y);
@@ -78,13 +69,12 @@ public class Bandit : MonoBehaviour {
         else
         {
             m_combatIdle = false;
-            m_animator.SetInteger("AnimState", 0);
         }
 
-        // Flip the character to face the Hero character when not dead
-        if (!m_isDead && GameObject.FindWithTag("Hero").transform.position.x > transform.position.x)
+        // Flip the character to face the Hero character when not dead and hero is near
+        if (!m_isDead && isHeroNear && GameObject.FindWithTag("Hero").transform.position.x > transform.position.x)
             transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
-        else if(!m_isDead && GameObject.FindWithTag("Hero").transform.position.x < transform.position.x)
+        else if(!m_isDead && isHeroNear && GameObject.FindWithTag("Hero").transform.position.x < transform.position.x)
             transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
         // Death animation on health 0
@@ -111,33 +101,42 @@ public class Bandit : MonoBehaviour {
 
     void FixedUpdate()
     {
-        // if(!m_isDead && !m_combatIdle) {
-        //     StartCoroutine("MoveCharacterAuto");
-        // }else {
-        //     StopCoroutine("MoveCharacterAuto");
-        // }
+        bool isHeroNear = Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f;
+
+        if(m_health <= 0 || isHeroNear) {
+            StopCoroutine("MoveCharacterAuto");
+            m_is_cRoutine_running = false;
+        }else {
+            if(!m_is_cRoutine_running) {
+                StartCoroutine("MoveCharacterAuto");
+                m_is_cRoutine_running = true;
+            }
+        }
     }
 
     IEnumerator MoveCharacterAuto ()
     {
         while(true) {
-            m_move_direction = Random.Range(-1f, 1f);
+            yield return new WaitForSeconds(3f);
+            
+            m_move_direction = -1f;
+            m_animator.SetInteger("AnimState", 2);
+            transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
-            if (m_move_direction != 0f)
-                m_animator.SetInteger("AnimState", 2);
-            else
-                m_animator.SetInteger("AnimState", 0);
-
-            // Swap direction of sprite depending on walk direction
-            if (m_move_direction > 0)
-                transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
-            else if (m_move_direction < 0)
-                transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-
-            // Move
             m_body2d.velocity = new Vector2(m_move_direction * m_speed, m_body2d.velocity.y);
+            
+            yield return new WaitForSeconds(1f);
+            m_animator.SetInteger("AnimState", 0);
 
-            yield return new WaitForSeconds(10f);
+            yield return new WaitForSeconds(2f);
+            m_move_direction = 1f;
+            m_animator.SetInteger("AnimState", 2);
+            transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
+
+            m_body2d.velocity = new Vector2(m_move_direction * m_speed, m_body2d.velocity.y);
+            
+            yield return new WaitForSeconds(1f);
+            m_animator.SetInteger("AnimState", 0);
         }
     }
 }
