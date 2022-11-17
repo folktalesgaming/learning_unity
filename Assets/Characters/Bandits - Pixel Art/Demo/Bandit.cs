@@ -8,8 +8,9 @@ public class Bandit : MonoBehaviour {
 
     private Animator            m_animator;    
     private Rigidbody2D         m_body2d;
+    private GameObject         m_hero_body;
     private Sensor_Bandit       m_groundSensor;
-    private bool                m_grounded = false;
+    // private bool                m_grounded = false;
     private bool                m_combatIdle = false;
     private bool                m_isDead = false;
     private int m_health = 100;
@@ -19,13 +20,17 @@ public class Bandit : MonoBehaviour {
     void Start () {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
+        m_hero_body = GameObject.FindWithTag("Hero");
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_Bandit>();
         m_is_cRoutine_running = false;
     }
 	
 	void Update () {
 
-        bool isHeroNear = Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f;
+        bool isHeroNear = Vector3.Distance(transform.position, m_hero_body.transform.position) < 2.0f;
+        // bool isHeroFacingCorrectly = 
+        //     ((transform.localScale.x == -1.0f && m_hero_body.transform.localScale.x == -1.0f) 
+        //     || (transform.localScale.x == 1.0f && m_hero_body.transform.localScale.x == 1.0f));
        
         //if (!m_grounded && m_groundSensor.State()) {
         //  m_grounded = true;
@@ -72,9 +77,9 @@ public class Bandit : MonoBehaviour {
         }
 
         // Flip the character to face the Hero character when not dead and hero is near
-        if (!m_isDead && isHeroNear && GameObject.FindWithTag("Hero").transform.position.x > transform.position.x)
+        if (!m_isDead && isHeroNear && m_hero_body.transform.position.x > transform.position.x)
             transform.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
-        else if(!m_isDead && isHeroNear && GameObject.FindWithTag("Hero").transform.position.x < transform.position.x)
+        else if(!m_isDead && isHeroNear && m_hero_body.transform.position.x < transform.position.x)
             transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
         // Death animation on health 0
@@ -101,7 +106,7 @@ public class Bandit : MonoBehaviour {
 
     void FixedUpdate()
     {
-        bool isHeroNear = Vector3.Distance(transform.position, GameObject.FindWithTag("Hero").transform.position) < 2.0f;
+        bool isHeroNear = Vector3.Distance(transform.position, m_hero_body.transform.position) < 2.0f;
 
         if(m_health <= 0 || isHeroNear) {
             StopCoroutine("MoveCharacterAuto");
